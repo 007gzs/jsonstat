@@ -12,10 +12,10 @@ fn main() {
     }
     let file = args.get(1).unwrap();
     let f = File::open(file).expect("file open error");
-    let mut check = JsonStat::new();
+    let mut stat = JsonStat::new();
     for line in BufReader::new(f).lines() {
         let data = line.expect("file read error");
-        check.stat_str(&data);
+        stat.stat_str(&data);
     }
-    println!("{}", check);
+    println!("{}", stat);
 }

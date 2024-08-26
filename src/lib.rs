@@ -175,11 +175,19 @@ impl Display for JsonStatItem {
 }
 pub struct JsonStat {
     items: BTreeMap<String, JsonStatItem>,
+    group_key: Option<String>,
 }
 impl JsonStat {
     pub fn new() -> Self {
         JsonStat {
             items: BTreeMap::new(),
+            group_key: None,
+        }
+    }
+    pub fn new_by_group(group_key: &str) -> Self {
+        JsonStat {
+            items: BTreeMap::new(),
+            group_key: Some(group_key.to_string()),
         }
     }
     pub fn stat_str(&mut self, line: &str) -> bool {
@@ -189,9 +197,34 @@ impl JsonStat {
             false
         }
     }
+    fn get_group_key(&self, value: &Value) -> String {
+        if let Some(key) = &self.group_key {
+            let mut val = value;
+            for k in key.split('.') {
+                val = match val.as_object() {
+                    Some(v) => match v.get(k) {
+                        Some(_v) => _v,
+                        None => {
+                            return "".to_string();
+                        }
+                    },
+                    None => {
+                        return "".to_string();
+                    }
+                }
+            }
+            if let Some(r) = val.as_str() {
+                r.to_string()
+            } else {
+                "".to_string()
+            }
+        } else {
+            "".to_string()
+        }
+    }
     pub fn stat_value(&mut self, value: &Value) -> bool {
         let mut todo_list = Vec::new();
-        todo_list.push(("".to_string(), value.clone()));
+        todo_list.push((self.get_group_key(value), value.clone()));
         while let Some((k, v)) = todo_list.pop() {
             let (item, list) = self.stat_key_value(&k, &v);
             if !list.is_empty() {
