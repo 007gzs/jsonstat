@@ -1,8 +1,9 @@
 use std::{collections::BTreeMap, fmt::Display};
 
-use serde_json::Value;
+use serde::Serialize;
+use serde_json::{json, Map, Value};
 
-#[derive(Clone)]
+#[derive(Serialize, Clone)]
 struct MaxMinCount<T> {
     count: usize,
     max: T,
@@ -46,7 +47,7 @@ impl<T: PartialOrd + Default + Clone> MaxMinCount<T> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Clone)]
 struct Count {
     count: usize,
 }
@@ -63,7 +64,7 @@ impl Count {
     }
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Clone)]
 struct JsonStatItem {
     string: MaxMinCount<usize>,
     int: MaxMinCount<i64>,
@@ -128,6 +129,59 @@ impl JsonStatItem {
             }
         }
         ret
+    }
+    fn to_json_value(&self) -> Value {
+        let mut ret = Map::new();
+        if self.null.count > 0 {
+            ret.insert("null".to_string(), json!({"count": self.null.count}));
+        }
+        if self.bool.count > 0 {
+            ret.insert("bool".to_string(), json!({"count": self.bool.count}));
+        }
+        if self.int.count > 0 {
+            ret.insert(
+                "int".to_string(),
+                json!({
+                    "count": self.int.count,
+                    "min": self.int.min,
+                    "max": self.int.max,
+                }),
+            );
+        }
+        if self.float.count > 0 {
+            ret.insert(
+                "float".to_string(),
+                json!({
+                    "count": self.float.count,
+                    "min": self.float.min,
+                    "max": self.float.max,
+                }),
+            );
+        }
+        if self.string.count > 0 {
+            ret.insert(
+                "string".to_string(),
+                json!({
+                    "count": self.string.count,
+                    "min": self.string.min,
+                    "max": self.string.max,
+                }),
+            );
+        }
+        if self.array.count > 0 {
+            ret.insert(
+                "array".to_string(),
+                json!({
+                    "count": self.array.count,
+                    "min": self.array.min,
+                    "max": self.array.max,
+                }),
+            );
+        }
+        if self.object.count > 0 {
+            ret.insert("object".to_string(), json!({"count": self.object.count}));
+        }
+        Value::Object(ret)
     }
 }
 
@@ -250,6 +304,17 @@ impl JsonStat {
             } else {
                 self.items.insert(k.clone(), v.clone());
             }
+        }
+    }
+    pub fn to_json_str(&self, full: bool) -> String {
+        if full {
+            serde_json::to_string(&self.items).unwrap()
+        } else {
+            let mut map = Map::new();
+            for (k, v) in self.items.iter() {
+                map.insert(k.clone(), v.to_json_value());
+            }
+            Value::Object(map).to_string()
         }
     }
 }

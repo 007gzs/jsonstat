@@ -17,5 +17,6 @@ fn main() {
         let data = line.expect("file read error");
         stat.stat_str(&data);
     }
-    println!("{}", stat);
+    println!("{}", stat.to_json_str(false));
+    println!("{}", stat.to_json_str(true));
 }
