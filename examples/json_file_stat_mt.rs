@@ -37,7 +37,6 @@ impl PathWalk {
                         .to_str()
                         .expect("path to str error")
                         .to_string();
-                    println!("new path {}", path);
                     self.paths.push(path);
                 }
                 continue;
